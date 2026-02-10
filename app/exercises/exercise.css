@@ -1,0 +1,154 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #f5f7fa;
+    min-height: 100vh;
+}
+
+/* Main content */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.page-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.page-header h1 {
+    color: #2d3748;
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.page-header p {
+    color: #718096;
+    font-size: 1.1rem;
+}
+
+/* Exercise categories */
+.exercise-category {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+    overflow: hidden;
+}
+
+.category-header {
+    background: linear-gradient(135deg, #52c87a, #3eb370);
+    color: white;
+    padding: 1.5rem;
+}
+
+.category-header h2 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.category-header p {
+    opacity: 0.9;
+    font-size: 0.95rem;
+}
+
+.exercises-grid {
+    padding: 1.5rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.exercise-card {
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+}
+
+.exercise-card:hover {
+    border-color: #52c87a;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(82, 200, 122, 0.2);
+}
+
+.exercise-card.completed {
+    border-color: #52c87a;
+    background-color: #f0fdf4;
+}
+
+.exercise-checkbox {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 24px;
+    height: 24px;
+    accent-color: #52c87a;
+    cursor: pointer;
+}
+
+.exercise-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 0.5rem;
+    padding-right: 2rem;
+}
+
+.exercise-description {
+    color: #718096;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    margin-bottom: 1rem;
+}
+
+.exercise-link {
+    color: #52c87a;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.exercise-link:hover {
+    text-decoration: underline;
+}
+
+.completion-status {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    background: #52c87a;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.exercise-card.completed .completion-status {
+    opacity: 1;
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 1rem;
+    }
+
+    .exercises-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .page-header h1 {
+        font-size: 2rem;
+    }
+}
