@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
+import Link from 'next/link';
 import QuoteCard from '../components/QuoteCard';
 import './home.css';
 
@@ -57,7 +58,9 @@ export default function Home() {
                 <div className="card-icon">💪</div>
                 <h3>Exercises</h3>
                 <p>Browse and track your workouts</p>
-                <a href="/exercises" className="card-btn">View Exercises</a>
+                 <Link href="/exercises" className="btn-primary">
+                  View Exercises
+                </Link>
               </div>
 
               {/* Progress Card */}
@@ -65,7 +68,9 @@ export default function Home() {
                 <div className="card-icon">📊</div>
                 <h3>My Progress</h3>
                 <p>Track your fitness journey</p>
-                <a href="/progress" className="card-btn">View Progress</a>
+                 <Link href="/exercises" className="btn-primary">
+                  View Progress
+                </Link>
               </div>
 
               {/* Health Card */}
@@ -73,7 +78,9 @@ export default function Home() {
                 <div className="card-icon">🥗</div>
                 <h3>Health & Nutrition</h3>
                 <p>Learn about healthy eating</p>
-                <a href="/health" className="card-btn">View Health Tips</a>
+                 <Link href="/exercises" className="btn-primary">
+                  View Health Tips
+                </Link>
               </div>
 
               {/* Today's Summary Card */}
@@ -88,7 +95,9 @@ export default function Home() {
                     Streak: <strong id="current-streak">{userStreak} day{userStreak !== 1 ? 's' : ''}</strong>
                   </span>
                 </p>
-                <a href="/exercises" className="card-btn">Quick Workout</a>
+                <Link href="/exercises" className="btn-primary">
+                  Quick Workout
+                </Link>
               </div>
             </div>
           </div>
