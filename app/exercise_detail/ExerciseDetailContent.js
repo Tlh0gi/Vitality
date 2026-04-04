@@ -107,13 +107,6 @@ export default function ExerciseDetailContent() {
           </div>
         </div>
 
-        {/* Exercise GIF */}
-        {exercise.gifUrl && (
-          <div className="exercise-detail-gif">
-            <img src={exercise.gifUrl} alt={exercise.name} />
-          </div>
-        )}
-
         {/* Exercise Content */}
         <div className="exercise-content">
           {/* Completion Status Banner */}
@@ -163,6 +156,13 @@ export default function ExerciseDetailContent() {
               {exercise.instructions}
             </div>
           </div>
+          
+          {/* Exercise GIF */}
+        {exercise.gifUrl && (
+          <div className="exercise-detail-gif">
+            <img src={exercise.gifUrl} alt={exercise.name} />
+          </div>
+        )}
 
           {/* Action Buttons */}
           <div className="action-buttons">

@@ -104,42 +104,57 @@ export default function QuoteCard() {
 
   if (isLoading || !quote) {
     return (
-      <section className="quote-section">
-        <div className="container">
-          <div className="quote-card">
-            <h3>Daily Motivation</h3>
-            <blockquote className="daily-quote">
-              <p>Loading...</p>
+      <section className="py-8 bg-white">
+        <div className="max-w-7xl mx-auto px-5">
+          <div className="bg-gradient-to-r from-green-600 to-teal-600 text-white p-8 rounded-2xl text-center shadow-xl">
+            <h3 className="mb-5 text-xl font-semibold">💪 Daily Motivation</h3>
+            <blockquote className="mb-5">
+              <p className="text-lg italic leading-relaxed transition-opacity duration-300">
+                Loading...
+              </p>
             </blockquote>
           </div>
         </div>
       </section>
     );
   }
-
+ 
   return (
-    <section className="quote-section">
-      <div className="container">
-        <div className="quote-card">
-          <h3>Daily Motivation</h3>
-          <blockquote className="daily-quote">
-            <p id="quote-text">{quote.text}</p>
-            <cite id="quote-author">- {quote.author}</cite>
+    <section className="py-8 bg-white">
+      <div className="max-w-7xl mx-auto px-5">
+        <div className="bg-gradient-to-r from-green-600 to-teal-600 text-white p-8 rounded-2xl text-center shadow-xl">
+          <h3 className="mb-5 text-xl font-semibold">💪 Daily Motivation</h3>
+          <blockquote className="mb-5">
+            <p 
+              id="quote-text" 
+              className="text-lg italic leading-relaxed transition-opacity duration-300 mb-4"
+            >
+              {quote.text}
+            </p>
+            <cite 
+              id="quote-author" 
+              className="text-sm opacity-90 transition-opacity duration-300 not-italic"
+            >
+              - {quote.author}
+            </cite>
           </blockquote>
-          <button 
-            className="refresh-quote-btn" 
+          
+          <button
             onClick={handleRefresh}
             disabled={isRefreshing}
+            className="bg-white/20 border-2 border-white/30 text-white px-4 py-2 rounded-full cursor-pointer text-sm transition-all duration-300 mt-4 relative z-10 hover:bg-white/30 hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
           >
             {isRefreshing ? (
               <>
-                <span className="loading-spinner"></span> Loading...
+                <span className="inline-block w-3.5 h-3.5 border-2 border-white/30 rounded-full border-t-white animate-spin mr-2" />
+                Loading...
               </>
             ) : (
               '🔄 New Quote'
             )}
           </button>
-          <div className="quote-last-updated">
+          
+          <div className="text-xs opacity-70 mt-2">
             Updated daily at midnight
           </div>
         </div>

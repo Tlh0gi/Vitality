@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import Link from 'next/link';
 import QuoteCard from '../components/QuoteCard';
-import './home.css';
 
 export default function Home() {
   const [username, setUsername] = useState('Guest');
@@ -37,12 +36,16 @@ export default function Home() {
     <>
       <Navbar />
       
-      <main className="main-content">
+      <main className="min-h-screen">
         {/* Welcome Section */}
-        <section className="welcome-section">
-          <div className="container">
-            <h1>Welcome</h1>
-            <p className="subtitle">Ready to crush your fitness goals today?</p>
+        <section className="bg-white py-10 border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-5 text-center">
+            <h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-3">
+              Welcome
+            </h1>
+            <p className="text-lg text-gray-600">
+              Ready to crush your fitness goals today?
+            </p>
           </div>
         </section>
 
@@ -50,52 +53,82 @@ export default function Home() {
         <QuoteCard />
 
         {/* Dashboard Cards */}
-        <section className="dashboard-section">
-          <div className="container">
-            <div className="dashboard-grid">
+        <section className="bg-white py-10">
+          <div className="max-w-7xl mx-auto px-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
               {/* Exercises Card */}
-              <div className="dashboard-card exercises-card">
-                <div className="card-icon">💪</div>
-                <h3>Exercises</h3>
-                <p>Browse and track your workouts</p>
-                 <Link href="/exercises" className="btn-primary">
+              <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100 text-center flex flex-col">
+                <div className="text-5xl mb-5">💪</div>
+                <h3 className="text-2xl font-semibold text-gray-800 mb-4">
+                  Exercises
+                </h3>
+                <p className="text-gray-600 mb-6 leading-relaxed flex-grow">
+                  Browse and track your workouts
+                </p>
+                <Link 
+                  href="/exercises" 
+                  className="inline-block bg-gradient-to-r from-green-500 to-teal-600 text-white font-semibold px-6 py-3 rounded-lg hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
+                >
                   View Exercises
                 </Link>
               </div>
-
+ 
               {/* Progress Card */}
-              <div className="dashboard-card progress-card">
-                <div className="card-icon">📊</div>
-                <h3>My Progress</h3>
-                <p>Track your fitness journey</p>
-                 <Link href="/exercises" className="btn-primary">
+              <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100 text-center flex flex-col">
+                <div className="text-5xl mb-5">📊</div>
+                <h3 className="text-2xl font-semibold text-gray-800 mb-4">
+                  My Progress
+                </h3>
+                <p className="text-gray-600 mb-6 leading-relaxed flex-grow">
+                  Track your fitness journey
+                </p>
+                <Link 
+                  href="/progress" 
+                  className="inline-block bg-gradient-to-r from-green-500 to-teal-600 text-white font-semibold px-6 py-3 rounded-lg hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
+                >
                   View Progress
                 </Link>
               </div>
-
+ 
               {/* Health Card */}
-              <div className="dashboard-card health-card">
-                <div className="card-icon">🥗</div>
-                <h3>Health & Nutrition</h3>
-                <p>Learn about healthy eating</p>
-                 <Link href="/exercises" className="btn-primary">
+              <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100 text-center flex flex-col">
+                <div className="text-5xl mb-5">🥗</div>
+                <h3 className="text-2xl font-semibold text-gray-800 mb-4">
+                  Health & Nutrition
+                </h3>
+                <p className="text-gray-600 mb-6 leading-relaxed flex-grow">
+                  Learn about healthy eating
+                </p>
+                <Link 
+                  href="/health" 
+                  className="inline-block bg-gradient-to-r from-green-500 to-teal-600 text-white font-semibold px-6 py-3 rounded-lg hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
+                >
                   View Health Tips
                 </Link>
               </div>
-
+ 
               {/* Today's Summary Card */}
-              <div className="dashboard-card summary-card">
-                <div className="card-icon">✅</div>
-                <h3>Today&apos;s Summary</h3>
-                <p className="summary-stats">
-                  <span className="stat-item">
-                    Exercises completed: <strong id="exercises-completed">{todayCompletions}</strong>
-                  </span>
-                  <span className="stat-item">
-                    Streak: <strong id="current-streak">{userStreak} day{userStreak !== 1 ? 's' : ''}</strong>
-                  </span>
-                </p>
-                <Link href="/exercises" className="btn-primary">
+              <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100 text-center flex flex-col">
+                <div className="text-5xl mb-5">✅</div>
+                <h3 className="text-2xl font-semibold text-gray-800 mb-4">
+                  Today&apos;s Summary
+                </h3>
+                <div className="text-left mb-6 space-y-2 flex-grow">
+                  <p className="text-gray-600">
+                    Exercises completed:{' '}
+                    <strong className="text-green-600">{todayCompletions}</strong>
+                  </p>
+                  <p className="text-gray-600">
+                    Streak:{' '}
+                    <strong className="text-green-600">
+                      {userStreak} day{userStreak !== 1 ? 's' : ''}
+                    </strong>
+                  </p>
+                </div>
+                <Link 
+                  href="/exercises" 
+                  className="inline-block bg-gradient-to-r from-green-500 to-teal-600 text-white font-semibold px-6 py-3 rounded-lg hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
+                >
                   Quick Workout
                 </Link>
               </div>
