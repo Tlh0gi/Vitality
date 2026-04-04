@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import Navbar from '../components/Navbar';
 import Link from 'next/link';
 import QuoteCard from '../components/QuoteCard';
@@ -58,10 +59,17 @@ export default function Home() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
               {/* Exercises Card */}
               <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100 text-center flex flex-col text-white">
-                <div className="text-5xl mb-5">💪</div>
-                <h3 className="text-2xl font-semibold text-gray-800 mb-4">
+                <h3 className="text-2xl font-semibold text-green-700 mb-2">
                   Exercises
                 </h3>
+                <div className="w-full h-38 relative rounded-md mb-4">
+                  <Image 
+                    fill
+                    src="/hero-fitness.jpg"
+                    alt="Fitness Exercises"
+                    className="object-cover rounded-md" />
+                </div>
+                
                 <p className="text-gray-600 mb-6 leading-relaxed flex-grow">
                   Browse and track your workouts
                 </p>
@@ -75,10 +83,17 @@ export default function Home() {
  
               {/* Progress Card */}
               <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100 text-center text-white flex flex-col">
-                <div className="text-5xl mb-5">📊</div>
-                <h3 className="text-2xl font-semibold text-gray-800 mb-4">
+                <h3 className="text-2xl font-semibold text-green-700 mb-2">
                   My Progress
                 </h3>
+                <div className="w-full h-38 relative rounded-md mb-4">
+                  <Image 
+                    fill
+                    src="/hero-progress.jpg"
+                    alt="Fitness Progress"
+                    className="object-cover rounded-md" />
+                </div>
+                
                 <p className="text-gray-600 mb-6 leading-relaxed flex-grow">
                   Track your fitness journey
                 </p>
@@ -92,10 +107,17 @@ export default function Home() {
  
               {/* Health Card */}
               <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100 text-center text-white flex flex-col">
-                <div className="text-5xl mb-5">🥗</div>
-                <h3 className="text-2xl font-semibold text-gray-800 mb-4">
+                <h3 className="text-2xl font-semibold text-green-700 mb-4">
                   Health & Nutrition
                 </h3>
+                <div className="w-full h-38 relative rounded-md mb-4">
+                  <Image 
+                    fill
+                    src="/hero-nutrition.jpg"
+                    alt="Fitness Health"
+                    className="object-cover rounded-md" />
+                </div>
+
                 <p className="text-gray-600 mb-6 leading-relaxed flex-grow">
                   Learn about healthy eating
                 </p>
@@ -108,11 +130,18 @@ export default function Home() {
               </div>
  
               {/* Today's Summary Card */}
+              
               <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100 text-center  text-white flex flex-col">
-                <div className="text-5xl mb-5">✅</div>
-                <h3 className="text-2xl font-semibold text-gray-800 mb-4">
+                <h3 className="text-2xl font-semibold text-green-700 mb-4">
                   Today&apos;s Summary
                 </h3>
+                <div className="w-full h-38 relative rounded-md mb-4">
+                  <Image 
+                    fill
+                    src="/hero-summary.jpg"
+                    alt="Fitness Update"
+                    className="object-cover rounded-md" />
+                </div>
                 <div className="text-left mb-6 space-y-2 flex-grow">
                   <p className="text-gray-600">
                     Exercises completed:{' '}
