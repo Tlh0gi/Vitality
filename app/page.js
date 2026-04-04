@@ -57,7 +57,7 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-5">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
               {/* Exercises Card */}
-              <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100 text-center flex flex-col">
+              <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100 text-center flex flex-col text-white">
                 <div className="text-5xl mb-5">💪</div>
                 <h3 className="text-2xl font-semibold text-gray-800 mb-4">
                   Exercises
@@ -74,7 +74,7 @@ export default function Home() {
               </div>
  
               {/* Progress Card */}
-              <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100 text-center flex flex-col">
+              <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100 text-center text-white flex flex-col">
                 <div className="text-5xl mb-5">📊</div>
                 <h3 className="text-2xl font-semibold text-gray-800 mb-4">
                   My Progress
@@ -91,7 +91,7 @@ export default function Home() {
               </div>
  
               {/* Health Card */}
-              <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100 text-center flex flex-col">
+              <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100 text-center text-white flex flex-col">
                 <div className="text-5xl mb-5">🥗</div>
                 <h3 className="text-2xl font-semibold text-gray-800 mb-4">
                   Health & Nutrition
@@ -108,7 +108,7 @@ export default function Home() {
               </div>
  
               {/* Today's Summary Card */}
-              <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100 text-center flex flex-col">
+              <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100 text-center  text-white flex flex-col">
                 <div className="text-5xl mb-5">✅</div>
                 <h3 className="text-2xl font-semibold text-gray-800 mb-4">
                   Today&apos;s Summary
