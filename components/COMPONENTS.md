@@ -1,21 +1,51 @@
 # Components
 
-The `components/` directory contains two shared React components used across the Vitality app. Both are client components rendered on the browser side.
+The `components/` directory contains reusable client-side UI components used across the Vitality application. These components are designed with a utility-first styling approach using Tailwind CSS, enabling rapid UI development, consistent design, and responsive behavior without maintaining separate CSS files.
+
+---
+
+## Design Approach
+
+### Why Tailwind CSS?
+
+The project uses Tailwind CSS instead of traditional CSS or component libraries (e.g. MUI) for the following reasons:
+
+* **Utility-first workflow**
+  Styling is applied directly in JSX via composable utility classes, eliminating context switching between CSS and component files.
+
+* **Responsive design by default**
+  Breakpoints (`md:`, `lg:`) are embedded inline, making it straightforward to define different layouts for mobile and desktop without duplicating components.
+
+* **No CSS bloat or naming conflicts**
+  Avoids global class collisions and unused CSS through atomic class usage.
+
+* **Faster iteration**
+  UI adjustments (spacing, colors, typography) can be made immediately without editing external stylesheets.
+
+* **Consistent design system**
+  Shared spacing, color gradients, and typography scales are enforced via Tailwind’s configuration.
 
 ---
 
 ## Files Overview
 
-| File | Purpose |
-|---|---|
-| `Navbar.js` | Global navigation bar rendered on every page |
-| `QuoteCard.js` | Daily motivational quote card with auto-refresh and manual refresh |
+| File           | Purpose                                                             |
+| -------------- | ------------------------------------------------------------------- |
+| `Navbar.js`    | Global responsive navigation bar rendered across all pages          |
+| `QuoteCard.js` | Dynamic motivational quote component with caching and refresh logic |
 
 ---
 
-## `Navbar.js`
+## Navbar.js
 
-A static client component that renders the top navigation bar. It is included in the root `layout.js` so it appears on every page of the app.
+A **stateless client component** responsible for rendering the application's primary navigation. It is included in the root layout to ensure global availability.
+
+### Key Characteristics
+
+* Fully responsive using Tailwind breakpoints
+* No internal state or side effects
+* Purely presentational
+* Optimized for reuse and consistency
 
 ### Directive
 
@@ -25,54 +55,62 @@ A static client component that renders the top navigation bar. It is included in
 
 ### Dependencies
 
-| Import | Source |
-|---|---|
+| Import | Source      |
+| ------ | ----------- |
 | `Link` | `next/link` |
 
-### Structure
-
-Renders a `<nav>` element with the following layout:
+### Layout Structure
 
 ```
-<nav.navbar>
-  <div.nav-container>
-    <div.nav-brand>        ← "Vitality" heading, links to "/"
-    <ul.nav-menu>
-      <li.nav-item>        ← Dashboard        → "/"
-      <li.nav-item>        ← Exercises        → "/exercises"
-      <li.nav-item>        ← My Progress      → "/progress"
-      <li.nav-item>        ← Health & Nutrition → "/health"
+<nav>
+  <div> (container)
+    <div> (brand/logo)
+    <ul> (navigation links)
 ```
+
+### Tailwind Implementation Details
+
+| Concern            | Implementation                                |
+| ------------------ | --------------------------------------------- |
+| Sticky positioning | `sticky top-0 z-50`                           |
+| Visual hierarchy   | `shadow-lg`, gradient background              |
+| Layout             | `flex`, `justify-between`, `items-center`     |
+| Responsiveness     | `flex-col md:flex-row`                        |
+| Spacing            | `px-5`, `py-4`, `gap-8`                       |
+| Interaction        | `hover:bg-white/10`, `hover:-translate-y-0.5` |
 
 ### Navigation Links
 
-| Label | Route |
-|---|---|
-| Dashboard | `/` |
-| Exercises | `/exercises` |
-| My Progress | `/progress` |
-| Health & Nutrition | `/health` |
+| Label              | Route        |
+| ------------------ | ------------ |
+| Dashboard          | `/`          |
+| Exercises          | `/exercises` |
+| My Progress        | `/progress`  |
+| Health & Nutrition | `/health`    |
 
-### CSS Classes
+### Design Notes
 
-| Class | Element |
-|---|---|
-| `.navbar` | `<nav>` wrapper |
-| `.nav-container` | Inner layout container |
-| `.nav-brand` | Brand/logo area |
-| `.nav-menu` | `<ul>` link list |
-| `.nav-item` | Each `<li>` |
-| `.nav-link` | Each `<Link>` anchor |
+* Uses a gradient background (`from-green-600 to-teal-600`) to align with the app’s health/fitness theme.
+* Mobile-first layout stacks elements vertically, then switches to horizontal on medium screens.
+* Hover effects provide subtle feedback without introducing heavy animations.
 
 ### Props
 
-None. This is a static presentational component with no props or state.
+None.
 
 ---
 
-## `QuoteCard.js`
+## QuoteCard.js
 
-A client component that displays the daily motivational quote on the Dashboard. It handles initial loading, automatic midnight refresh, a one-minute interval fallback check, and a manual refresh button.
+A **stateful client component** responsible for fetching, caching, and displaying a daily motivational quote. It includes both time-based automation and manual refresh capabilities.
+
+### Responsibilities
+
+* Retrieve a cached daily quote
+* Fetch a new quote when needed
+* Persist data in `localStorage`
+* Automatically refresh at midnight
+* Provide manual refresh interaction
 
 ### Directive
 
@@ -82,89 +120,114 @@ A client component that displays the daily motivational quote on the Dashboard. 
 
 ### Dependencies
 
-| Import | Source |
-|---|---|
-| `useState`, `useEffect` | `react` |
-| `getDailyQuote` | `../utils/quoteService` |
-| `fetchQuoteFromAPIs` | `../utils/quoteService` |
-| `saveQuoteToLocalStorage` | `../utils/quoteService` |
-| `getTodayDateString` | `../utils/quoteService` |
+| Import          | Source                  |
+| --------------- | ----------------------- |
+| React Hooks     | `react`                 |
+| Quote utilities | `../utils/quoteService` |
 
-### State
+### State Management
 
-| Variable | Type | Initial Value | Description |
-|---|---|---|---|
-| `quote` | `object \| null` | `null` | The currently displayed quote `{ text, author }` |
-| `isLoading` | `boolean` | `true` | Controls the loading skeleton display |
-| `isRefreshing` | `boolean` | `false` | Controls the refresh button's loading state |
+| State          | Type             | Purpose                       |
+| -------------- | ---------------- | ----------------------------- |
+| `quote`        | `object \| null` | Stores `{ text, author }`     |
+| `isLoading`    | `boolean`        | Controls initial loading UI   |
+| `isRefreshing` | `boolean`        | Controls refresh button state |
 
-### Lifecycle & Effects
-
-**Effect 1 — Initial load**
-Runs once on mount. Calls `loadQuote()` to fetch or retrieve the cached daily quote.
-
-**Effect 2 — Midnight timeout**
-Calculates the milliseconds until the next midnight and sets a `setTimeout` to call `loadQuote()` when it fires. Recursively resets itself after each midnight so it continues to work across multiple days. Clears the timeout on unmount.
-
-**Effect 3 — One-minute interval fallback**
-Sets a `setInterval` that checks every 60 seconds whether the stored quote's date differs from today's date. If the date has changed (e.g. the tab was left open overnight), it calls `loadQuote()` to refresh. Clears the interval on unmount.
-
-### Functions
-
-**`loadQuote()`** *(async)*
-Calls `getDailyQuote()` and sets the `quote` state. On error, falls back to a hardcoded quote. Sets `isLoading` to `false` when done.
-
-**`handleRefresh()`** *(async)*
-Triggered by the refresh button. Calls `fetchQuoteFromAPIs()` to get a new random quote, saves it to `localStorage` via `saveQuoteToLocalStorage`, and updates `quote` state. Sets `isRefreshing` to `true` for the duration and resets it after 2 seconds on success.
-
-### Rendered Output
-
-**Loading state** — shown while `isLoading` is `true` or `quote` is `null`:
+### Data Flow Architecture
 
 ```
-<section.quote-section>
-  <div.container>
-    <div.quote-card>
-      <h3> Daily Motivation
-      <blockquote.daily-quote>
-        <p> Loading...
+Component Mount
+   ↓
+getDailyQuote()
+   ↓
+(localStorage OR API)
+   ↓
+setQuote()
+   ↓
+Render UI
 ```
 
-**Loaded state:**
+### Side Effects
 
-```
-<section.quote-section>
-  <div.container>
-    <div.quote-card>
-      <h3> Daily Motivation
-      <blockquote.daily-quote>
-        <p #quote-text>     ← quote.text
-        <cite #quote-author> ← "- quote.author"
-      <button.refresh-quote-btn>
-        → Refreshing: <span.loading-spinner> + "Loading..."
-        → Idle: "🔄 New Quote"
-      <div.quote-last-updated> ← "Updated daily at midnight"
-```
+#### 1. Initial Load
 
-### CSS Classes
+* Executes once on mount
+* Retrieves cached or fresh quote
 
-| Class | Element |
-|---|---|
-| `.quote-section` | `<section>` wrapper |
-| `.container` | Inner layout container |
-| `.quote-card` | Card wrapper |
-| `.daily-quote` | `<blockquote>` element |
-| `.refresh-quote-btn` | Refresh button |
-| `.loading-spinner` | Spinner `<span>` shown during refresh |
-| `.quote-last-updated` | Footer note below the button |
+#### 2. Midnight Synchronization
 
-### IDs
+* Dynamically calculates time until next midnight
+* Uses recursive `setTimeout` for long-term accuracy
+* Prevents drift vs fixed intervals
 
-| ID | Element | Content |
-|---|---|---|
-| `#quote-text` | `<p>` | The quote body text |
-| `#quote-author` | `<cite>` | The quote author, prefixed with `"-"` |
+#### 3. Fallback Interval Check
+
+* Runs every 60 seconds
+* Ensures correctness if:
+
+  * Tab remains open overnight
+  * Timeout fails or is throttled
+
+### Core Functions
+
+#### `loadQuote()`
+
+* Fetches daily quote via `getDailyQuote`
+* Handles errors with fallback content
+* Updates loading state
+
+#### `handleRefresh()`
+
+* Fetches a new quote via API
+* Updates local storage
+* Provides user feedback with a temporary loading state
+
+### Tailwind Implementation Details
+
+| Concern           | Implementation                         |
+| ----------------- | -------------------------------------- |
+| Card design       | `rounded-2xl shadow-xl`                |
+| Theme consistency | Same gradient as Navbar                |
+| Typography        | `text-lg italic`, `text-sm opacity-90` |
+| Layout            | `text-center`, `max-w-7xl mx-auto`     |
+| Button states     | `hover`, `disabled`, `transition-all`  |
+| Loading spinner   | `animate-spin`                         |
+
+### Rendering States
+
+#### Loading State
+
+* Displays placeholder text
+* Prevents layout shift by keeping structure consistent
+
+#### Loaded State
+
+* Displays quote and author
+* Enables refresh interaction
+* Shows metadata ("Updated daily at midnight")
+
+### Design Decisions
+
+* **LocalStorage caching** reduces unnecessary API calls and improves perceived performance.
+* **Dual refresh strategy (timeout + interval)** ensures reliability across browser behaviors.
+* **Optimistic UI updates** during refresh improve responsiveness.
+* **Shared styling tokens (gradients, spacing)** maintain visual consistency with other components.
 
 ### Props
 
-None. All data is sourced internally via `quoteService.js`.
+None.
+
+---
+
+## Summary
+
+These components demonstrate a clear separation of concerns:
+
+* `Navbar` → static, layout-focused
+* `QuoteCard` → dynamic, logic-heavy
+
+Both leverage Tailwind CSS to:
+
+* Eliminate traditional CSS overhead
+* Enable responsive design inline
+* Maintain a consistent UI system

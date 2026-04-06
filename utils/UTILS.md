@@ -1,6 +1,6 @@
 # Utils
 
-The `utils/` directory contains all the data and logic that powers the Vitality app. It is split into five files, each with a clear single responsibility — from static exercise and nutrition data, to localStorage management, to quote delivery and progress analytics.
+The `utils/` directory contains all the data and logic that powers the Vitality app. With the ExerciseDB API integration, it now includes eight files with clear responsibilities — from API integration and data adaptation, to static fallback data, localStorage management, quote delivery, and progress analytics.
 
 ---
 
@@ -8,21 +8,274 @@ The `utils/` directory contains all the data and logic that powers the Vitality 
 
 | File | Purpose |
 |---|---|
-| `exerciseData.js` | Static exercise and category data + lookup helpers |
+| `exerciseDbApi.js` | **NEW** - ExerciseDB API integration via RapidAPI |
+| `exerciseAdapter.js` | **NEW** - Converts API format to Vitality app format |
+| `exerciseProvider.js` | **NEW** - Smart provider with API-first, fallback logic |
+| `exerciseData.js` | Static exercise and category data (fallback) |
 | `exerciseStorage.js` | localStorage read/write for exercise completions and streaks |
 | `nutritionData.js` | Static nutrition tips and food data per workout category |
 | `quoteService.js` | Daily motivational quote logic with localStorage caching |
-| `stats.js` (progressStats.js) | Progress analytics derived from exercise history |
+| `stats.js` | Progress analytics derived from exercise history |
 
 ---
 
-## `exerciseData.js`
+## 🆕 ExerciseDB API Integration
 
-Holds all static exercise content used throughout the app. It exports two data arrays and four helper functions.
+### `exerciseDbApi.js`
 
-### Data
+Handles all API calls to ExerciseDB via RapidAPI. **No caching** - fresh requests per API terms.
 
-**`EXERCISE_CATEGORIES`** — An array of 4 category objects, each with an `id`, `name`, and `description`:
+#### Configuration
+
+```javascript
+const RAPIDAPI_KEY = process.env.NEXT_PUBLIC_RAPIDAPI_KEY;
+const RAPIDAPI_HOST = 'exercisedb.p.rapidapi.com';
+```
+
+**API Plan:** BASIC (180p resolution GIFs)
+
+#### Core Functions
+
+**`fetchFromAPI(endpoint)`** *(private)*
+Generic fetch wrapper that handles all API communication, error codes, and quota tracking.
+
+**`isAPIAvailable()`**
+Returns `true` if API key exists and quota hasn't been exceeded.
+
+**`resetAPIAvailability()`**
+Resets the quota flag for retry logic.
+
+#### Exercise Endpoints
+
+**`getAllExercises(limit, offset)`**
+Gets all exercises with pagination. Default: all exercises (limit=0).
+
+**`getExerciseById(exerciseId)`**
+Retrieves a single exercise by its ID.
+
+**`getExercisesByBodyPart(bodyPart)`**
+Filters exercises by body part (e.g., 'back', 'chest', 'waist', 'cardio').
+
+**`getExercisesByTarget(target)`**
+Filters by target muscle (e.g., 'biceps', 'abs', 'glutes').
+
+**`getExercisesByEquipment(equipment)`**
+Filters by equipment type (e.g., 'dumbbell', 'barbell', 'body weight').
+
+**`searchExercisesByName(name)`**
+Searches exercises by name string.
+
+#### List Endpoints
+
+**`getBodyPartList()`**
+Returns array of all available body parts.
+
+**`getTargetList()`**
+Returns array of all target muscles.
+
+**`getEquipmentList()`**
+Returns array of all equipment types.
+
+#### Helper Functions
+
+**`getExerciseGifUrl(exerciseId)`**
+Constructs the image URL with 180p resolution (BASIC plan).
+
+```javascript
+// Returns:
+`https://exercisedb.p.rapidapi.com/image?exerciseId=${id}&resolution=180&rapidapi-key=${key}`
+```
+
+**`getFeaturedExercisesByCategories(bodyParts)`**
+Batch fetches exercises from multiple categories. Returns 4 per category.
+
+**`universalSearch(query)`**
+Searches across all exercise attributes (name, target, body part, equipment).
+
+**`getRecommendedExercises(bodyPart)`**
+Returns curated exercises filtered for beginner-friendly equipment.
+
+#### Error Handling
+
+| Status Code | Meaning | Action |
+|-------------|---------|--------|
+| 200 | Success | Return data |
+| 429 | Quota exceeded | Disable API, use fallback |
+| 401 | Invalid API key | Return error |
+| 500 | Server error | Retry or fallback |
+
+---
+
+### `exerciseAdapter.js`
+
+Converts ExerciseDB API format to Vitality app format. Ensures compatibility with existing completion tracking.
+
+#### Body Part Mapping
+
+```javascript
+const BODY_PART_TO_CATEGORY = {
+  'back': 1,           // Upper Body
+  'chest': 1,          // Upper Body
+  'shoulders': 1,      // Upper Body
+  'upper arms': 1,     // Upper Body
+  'lower arms': 2,     // Lower Body
+  'lower legs': 2,     // Lower Body
+  'waist': 3,          // Core
+  'cardio': 4,         // Cardio
+  'neck': 1            // Upper Body
+};
+```
+
+#### Core Functions
+
+**`adaptExercise(apiExercise)`**
+Converts single API exercise object to Vitality format.
+
+**API Format:**
+```javascript
+{
+  id: "0001",
+  name: "3/4 sit-up",
+  bodyPart: "waist",
+  target: "abs",
+  equipment: "body weight",
+  gifUrl: "https://..."
+}
+```
+
+**Vitality Format:**
+```javascript
+{
+  id: "0001",
+  name: "3/4 Sit-up",           // Capitalized
+  categoryId: 3,                // Mapped from bodyPart
+  description: "Targets abs...", // Generated
+  instructions: "...",           // Generated
+  bodyPart: "waist",
+  target: "abs",
+  equipment: "body weight",
+  gifUrl: "/api/exercise?url=...", // Proxied
+  source: "api"
+}
+```
+
+**`adaptExercises(apiExercises)`**
+Converts array of API exercises.
+
+**`capitalizeExerciseName(name)`** *(private)*
+Capitalizes exercise names properly: "push-up" → "Push-up"
+
+**`generateInstructions(exercise)`** *(private)*
+Creates basic instructions from exercise metadata.
+
+#### Utility Functions
+
+**`getCategoryBodyParts(categoryId)`**
+Returns ExerciseDB body parts for a Vitality category.
+
+**`getCategoryName(categoryId)`**
+Returns category name (Upper Body, Lower Body, Core, Cardio).
+
+**`groupByCategory(exercises)`**
+Groups exercises by Vitality category ID.
+
+**`filterExercises(exercises, query)`**
+Filters exercises by search query.
+
+**`sortExercisesByName(exercises, ascending)`**
+Sorts exercises alphabetically.
+
+**`getUniqueEquipment(exercises)`**
+Extracts unique equipment types.
+
+**`getUniqueTargets(exercises)`**
+Extracts unique target muscles.
+
+**`adaptLocalExercise(localExercise)`**
+Converts local fallback exercises to API-compatible format.
+
+---
+
+### `exerciseProvider.js`
+
+Smart exercise provider with API-first strategy and automatic fallback to local data.
+
+#### Session Cache
+
+```javascript
+{
+  usingAPI: true,          // Whether to try API
+  lastAPICheck: null,      // Last API check timestamp
+  bodyParts: null,         // Cached body parts list
+  targets: null,           // Cached targets list
+  equipment: null          // Cached equipment list
+}
+```
+
+**Note:** In-memory only (not localStorage) per API terms.
+
+#### Strategy
+
+1. **Try ExerciseDB API first**
+2. **On failure (quota/error)** → Switch to local data
+3. **Session flag persists** → No further API calls until reload
+
+#### Core Functions
+
+**`getAllExercisesForApp(limit)`**
+Gets all exercises (API or local). Returns adapted format.
+
+**`getFeaturedExercises()`**
+Gets 4 exercises per category for homepage display.
+
+**`getExercise(exerciseId)`**
+Gets single exercise by ID (tries API, falls back to local).
+
+**`searchExercises(query)`**
+Searches exercises across all attributes.
+
+**`getExercisesByAppCategory(categoryId)`**
+Gets all exercises for a Vitality category (1-4).
+
+**`getFilterOptions()`**
+Gets available body parts, targets, and equipment for filters.
+
+**`getCategories()`**
+Returns the 4 main Vitality categories (always local).
+
+**`getCategory(categoryId)`**
+Gets single category by ID.
+
+**`getDataSource()`**
+Returns current data source: `'api'` or `'local'`.
+
+**`resetSession()`**
+Resets session cache (for testing/retry).
+
+#### Response Format
+
+All provider functions return:
+```javascript
+{
+  success: true,
+  data: [...],
+  source: 'api' | 'local'
+}
+```
+
+---
+
+## 📁 Existing Files (Updated Context)
+
+### `exerciseData.js`
+
+**Role:** Static fallback data when API is unavailable.
+
+Holds all static exercise content. Now serves as the **fallback datasource** when ExerciseDB API quota is exceeded or unavailable.
+
+#### Data
+
+**`EXERCISE_CATEGORIES`** — 4 category objects:
 
 | ID | Name | Description |
 |---|---|---|
@@ -31,190 +284,177 @@ Holds all static exercise content used throughout the app. It exports two data a
 | 3 | Core | Core strength and stability |
 | 4 | Cardio | Endurance and cardiovascular fitness |
 
-**`EXERCISES`** — An array of 20 exercise objects. Each exercise has:
+**`EXERCISES`** — 20 fallback exercise objects:
 
 | Field | Type | Description |
 |---|---|---|
 | `id` | number | Unique identifier |
 | `name` | string | Exercise name |
-| `categoryId` | number | Links to an `EXERCISE_CATEGORIES` entry |
-| `description` | string | Short summary of the exercise |
-| `instructions` | string | Step-by-step instructions including sets and reps |
+| `categoryId` | number | Links to `EXERCISE_CATEGORIES` |
+| `description` | string | Short summary |
+| `instructions` | string | Step-by-step instructions |
 
-### Functions
+#### Functions
 
 **`getExercisesByCategory(categoryId)`**
-Returns all exercises belonging to the given category ID.
+Returns all local exercises for a category.
 
 **`getExerciseById(exerciseId)`**
-Returns a single exercise object by its ID. Parses the ID as an integer so string inputs are handled safely.
+Returns single local exercise by ID.
 
 **`getCategoryById(categoryId)`**
-Returns a single category object by its ID.
+Returns category object by ID.
 
-**`truncateWords(text, maxWords = 20)`**
-Truncates a string to a maximum number of words and appends `...` if the text exceeds the limit. Defaults to 20 words. Used to keep exercise descriptions concise in list views.
+**`truncateWords(text, maxWords)`**
+Truncates text to max words with `...`.
 
 ---
 
-## `exerciseStorage.js`
+### `exerciseStorage.js`
 
-Manages all reading and writing of exercise completion data in `localStorage`. Depends on `getTodayDateString` from `quoteService.js`. All functions guard against server-side rendering by checking `typeof window === 'undefined'` before accessing `localStorage`.
+**No changes** - Works seamlessly with both API and local exercises.
 
-### Storage Keys
+Manages exercise completion tracking in `localStorage`. Works with both API exercise IDs and local exercise IDs.
+
+#### Storage Keys
 
 | Key | Value |
 |---|---|
-| `exerciseCompletions` | JSON array of completion objects `{ exerciseId, date, timestamp }` |
-| `exerciseStats` | JSON object `{ completions, streak }` for the current day |
+| `exerciseCompletions` | Array of `{ exerciseId, date, timestamp }` |
+| `exerciseStats` | `{ completions, streak }` for current day |
 
-### Functions
+#### Functions
 
 **`getCompletedExercises()`**
-Returns an array of exercise IDs completed today. Filters the full completions array to only today's date.
+Returns array of exercise IDs completed today.
 
 **`toggleExerciseCompletion(exerciseId)`**
-Adds or removes a completion entry for the given exercise on today's date. Returns `{ completed: boolean, success: boolean }`. Automatically calls `updateExerciseStats()` after each toggle.
+Adds/removes completion. Works with any exercise ID (API or local).
 
 **`updateExerciseStats()`**
-Recalculates and saves today's completion count and current streak to `localStorage`. Returns the updated stats object.
+Recalculates today's stats and streak.
 
 **`calculateStreak(completions)`** *(private)*
-Internal helper that counts consecutive days of exercise backwards from today using a sorted list of unique date strings.
+Counts consecutive exercise days.
 
 **`getExerciseHistory()`**
-Returns the full raw completions array from `localStorage`, or an empty array if none exists.
+Returns full completion history.
 
 **`cleanupOldCompletions()`**
-Removes any completion entries older than 90 days. Should be called periodically to keep `localStorage` lean.
+Removes entries older than 90 days.
 
 ---
 
-## `nutritionData.js`
+### `nutritionData.js`
 
-Contains all static nutrition content for the Health & Nutrition page, organised by workout category. Exports one data object and four utility functions.
+**No changes** - Independent of exercise data source.
 
-### Data
+Contains static nutrition content for Health & Nutrition page.
 
-**`NUTRITION_DATA`** — A keyed object with five sections:
+#### Data
+
+**`NUTRITION_DATA`** — 5 nutrition sections:
 
 | Key | Title | Focus |
 |---|---|---|
-| `general` | General Fitness Nutrition | Overall health and balanced eating |
-| `upper_body` | Upper Body Nutrition | Muscle building and recovery |
-| `lower_body` | Lower Body Nutrition | Energy, bones, and endurance |
-| `core` | Core Nutrition | Fat reduction and digestion |
-| `cardio` | Cardio Nutrition | Endurance and electrolyte balance |
+| `general` | General Fitness Nutrition | Overall health |
+| `upper_body` | Upper Body Nutrition | Muscle building |
+| `lower_body` | Lower Body Nutrition | Energy & endurance |
+| `core` | Core Nutrition | Fat reduction |
+| `cardio` | Cardio Nutrition | Cardiovascular health |
 
-Each section contains:
+Each section: `{ title, icon, description, tips[], foods[] }`
 
-| Field | Type | Description |
-|---|---|---|
-| `title` | string | Display name |
-| `icon` | string | Emoji icon |
-| `description` | string | Short summary |
-| `tips` | array | List of `{ title, content, icon }` tip objects |
-| `foods` | array | List of recommended food strings |
-
-### Functions
+#### Functions
 
 **`getNutritionSection(sectionKey)`**
-Returns a single nutrition section by key (e.g. `'cardio'`), or `null` if the key doesn't exist.
+Returns single section or null.
 
 **`getAllFoods()`**
-Returns a deduplicated, alphabetically sorted array of all food items across every section. Uses a `Set` internally to eliminate duplicates.
+Returns deduplicated sorted food list.
 
-**`getTipsByCategory(category = null)`**
-Returns all tips across all sections, each enriched with `category` (the section key) and `categoryTitle`. If a `category` key is provided, returns only tips from that section.
+**`getTipsByCategory(category)`**
+Returns tips, optionally filtered.
 
 **`getSectionKeys()`**
-Returns an array of all section keys: `['general', 'upper_body', 'lower_body', 'core', 'cardio']`.
+Returns all section keys.
 
 ---
 
-## `quoteService.js`
+### `quoteService.js`
 
-Handles the daily motivational quote shown on the Dashboard. Quotes are served from a hardcoded local list and cached in `localStorage` so the same quote persists for the full day.
+**No changes** - Independent of exercise data source.
 
-### Data
+Handles daily motivational quotes with localStorage caching.
 
-**`FALLBACK_QUOTES`** — An array of 10 motivational quote objects, each with `text` and `author` fields.
+#### Data
 
-### Storage Key
+**`FALLBACK_QUOTES`** — 10 motivational quotes.
+
+#### Storage
 
 | Key | Value |
 |---|---|
-| `dailyQuote` | JSON object `{ quote: { text, author }, date: 'YYYY-MM-DD' }` |
+| `dailyQuote` | `{ quote: { text, author }, date }` |
 
-### Functions
+#### Functions
 
 **`getTodayDateString()`**
-Returns today's date as a `YYYY-MM-DD` string. Shared across multiple utils files for consistent date comparison.
+Returns `YYYY-MM-DD` format date.
 
 **`getRandomFallbackQuote()`**
-Picks and returns a random quote from `FALLBACK_QUOTES`.
+Picks random quote.
 
 **`saveQuoteToLocalStorage(quote, date)`**
-Persists a quote and its date to `localStorage`. No-ops in non-browser environments.
+Persists quote.
 
 **`getQuoteFromLocalStorage()`**
-Retrieves and parses the stored quote object, or returns `null` if none exists or parsing fails.
+Retrieves stored quote.
 
 **`shouldFetchNewQuote()`**
-Returns `true` if no quote is stored or if the stored quote's date doesn't match today. Drives the cache invalidation logic.
+Checks if quote needs refresh.
 
 **`getDailyQuote()`** *(async)*
-Main function used by UI components. Returns the cached quote for today if valid, otherwise picks a new random quote, saves it, and returns it.
+Main function - returns cached or new quote.
 
 **`fetchQuoteFromAPIs()`** *(async)*
-Returns a random hardcoded quote. Originally intended for external API calls; now serves as a manual refresh helper that bypasses the daily cache.
+Manual refresh function.
 
 ---
 
-## `stats.js` (progressStats.js)
+### `stats.js`
 
-Derives all progress statistics displayed on the My Progress page. Depends on `quoteService.js` (for `getTodayDateString`), `exerciseStorage.js` (for `getExerciseHistory`), and `exerciseData.js` (for `getExerciseById`).
+**Updated** - Works with both API and local exercise IDs.
 
-### Helper
+Derives progress statistics from exercise completion history. Now works seamlessly with exercises from either source.
 
-**`getDateDaysAgo(daysAgo)`** *(private)*
-Returns a `YYYY-MM-DD` string for a date `N` days before today. Used to define rolling time windows for weekly and monthly stats.
-
-### Functions
+#### Functions
 
 **`calculateStreak()`**
-Calculates the current consecutive-day exercise streak by walking backwards from today through the exercise history. Caps at 365 days.
+Calculates consecutive-day streak (capped at 365 days).
 
 **`getWeeklyCompletions()`**
-Returns the total number of exercises completed in the last 7 days.
+Returns completions in last 7 days.
 
 **`getMonthlyCompletions()`**
-Returns the total number of exercises completed in the last 30 days.
+Returns completions in last 30 days.
 
 **`getTotalCompletions()`**
-Returns the all-time total number of exercise completions.
+Returns all-time total.
 
-**`getCategoryBreakdown(daysBack = 30)`**
-Returns an array of category stats for the given time window. Each entry contains:
+**`getCategoryBreakdown(daysBack)`**
+Returns category stats with percentages.
 
-| Field | Description |
-|---|---|
-| `name` | Category name (e.g. `'Upper Body'`) |
-| `count` | Number of completions in that category |
-| `percentage` | Share of total completions, rounded to the nearest whole number |
-
-Results are sorted by count, highest first.
-
-**`getRecentActivity(limit = 10)`**
-Returns the most recent `N` exercise completions with enriched data — exercise name, category name, date, and timestamp. Null entries (from deleted exercises) are filtered out.
+**`getRecentActivity(limit)`**
+Returns recent completions with exercise details.
 
 **`formatDate(dateString)`**
-Formats a date string for display. Returns `'Today'` or `'Yesterday'` for recent dates, or a short locale string (e.g. `'Jun 5'`) for older ones. Includes the year if the date is from a previous calendar year.
+Formats dates for display ('Today', 'Yesterday', etc.).
 
 **`getAllProgressStats()`**
-Convenience function that calls all the above and returns a single object:
+Convenience function returning all stats:
 
-```js
+```javascript
 {
   currentStreak,
   weeklyCompletions,
@@ -224,3 +464,175 @@ Convenience function that calls all the above and returns a single object:
   recentActivities
 }
 ```
+
+---
+
+## 🔄 Data Flow
+
+### Exercise Display Flow
+
+```
+User Action
+    ↓
+exerciseProvider.js (Smart Router)
+    ↓
+Try ExerciseDB API?
+    ├─ YES → exerciseDbApi.js → API Request
+    │            ↓
+    │        Success? → exerciseAdapter.js → Convert Format
+    │            ↓
+    │        Return Adapted Data
+    │
+    └─ NO/FAILED → exerciseData.js → Local Fallback
+                        ↓
+                   adaptLocalExercise()
+                        ↓
+                   Return Compatible Data
+```
+
+### Completion Tracking Flow
+
+```
+User Marks Complete
+    ↓
+exerciseStorage.js
+    ↓
+Save to localStorage (works with any ID)
+    ↓
+Update Stats
+    ↓
+stats.js reads completions
+    ↓
+exerciseProvider.getExercise(id)
+    ↓
+Display in Progress Page
+```
+
+---
+
+## 🔑 Key Integration Points
+
+### How Components Use Utils
+
+#### Exercises Page
+```javascript
+import { 
+  getFeaturedExercises,
+  searchExercises,
+  getExercisesByAppCategory 
+} from './exerciseProvider';
+```
+
+#### Exercise Detail Page
+```javascript
+import { getExercise } from './exerciseProvider';
+```
+
+#### Completion Tracking (All Pages)
+```javascript
+import { 
+  getCompletedExercises,
+  toggleExerciseCompletion 
+} from './exerciseStorage';
+```
+
+#### Progress Page
+```javascript
+import { getAllProgressStats } from './stats';
+```
+
+---
+
+## 📊 API vs Local Data
+
+### When API is Used
+- ✅ App loads normally
+- ✅ API key present in environment
+- ✅ Quota not exceeded (429 error)
+- ✅ API responding successfully
+
+**Result:** 1300+ exercises with GIF animations
+
+### When Local Data is Used
+- ⚠️ API quota exceeded (429 error)
+- ⚠️ API key missing
+- ⚠️ API unavailable/error
+- ⚠️ Network failure
+
+**Result:** 20 hardcoded exercises (no GIFs)
+
+### User Experience
+
+**API Mode:**
+- Full exercise library
+- 180p GIF demonstrations
+- Search across 1300+ exercises
+- All categories populated
+
+**Local Mode:**
+- Amber banner: "Using offline exercises"
+- 20 core exercises
+- All features still work
+- Completion tracking unaffected
+- Progress stats still accurate
+
+---
+
+## 🔧 Environment Configuration
+
+### Required Environment Variable
+
+```bash
+# .env.local
+NEXT_PUBLIC_RAPIDAPI_KEY=your_rapidapi_key_here
+```
+
+**Plan:** BASIC (180p resolution)
+
+### Validation
+
+```javascript
+// Check if API is configured
+import { isAPIAvailable } from './exerciseDbApi';
+
+if (isAPIAvailable()) {
+  console.log('API configured ✅');
+} else {
+  console.log('Using local data ⚠️');
+}
+```
+
+---
+
+## 📝 localStorage Keys (Complete List)
+
+| Key | Source | Contents |
+|-----|--------|----------|
+| `exerciseCompletions` | exerciseStorage.js | Completion history |
+| `exerciseStats` | exerciseStorage.js | Daily stats & streak |
+| `dailyQuote` | quoteService.js | Daily motivational quote |
+| `username` | Dashboard (read-only) | User's display name |
+
+**Note:** No exercise data cached per API terms.
+
+---
+
+## 🎯 Summary
+
+The utils directory now provides:
+
+1. **API Integration** (exerciseDbApi.js)
+2. **Data Adaptation** (exerciseAdapter.js)
+3. **Smart Routing** (exerciseProvider.js)
+4. **Fallback Data** (exerciseData.js)
+5. **Completion Tracking** (exerciseStorage.js)
+6. **Progress Analytics** (stats.js)
+7. **Nutrition Content** (nutritionData.js)
+8. **Daily Quotes** (quoteService.js)
+
+All working together to provide:
+- ✅ 1300+ exercises when API available
+- ✅ Seamless fallback to 20 local exercises
+- ✅ Consistent completion tracking
+- ✅ Accurate progress statistics
+- ✅ Zero data loss on API failure
