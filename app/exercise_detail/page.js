@@ -3,16 +3,16 @@
 import { Suspense } from 'react';
 import Navbar from '../../components/Navbar';
 import ExerciseDetailContent from './ExerciseDetailContent';
-import './exercise_detail.css';
+
 
 export default function ExerciseDetail() {
   return (
     <>
       <Navbar />
       <Suspense fallback={
-        <div className="detail-container">
-          <p>Loading...</p>
-        </div>
+       <div className="max-w-5xl mx-auto px-5 py-10 text-gray-500 text-sm">
+        Loading...
+      </div>
       }>
         <ExerciseDetailContent />
       </Suspense>
