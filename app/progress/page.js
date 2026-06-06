@@ -5,6 +5,18 @@ import Link from 'next/link';
 import Navbar from '../../components/Navbar';
 import { getAllProgressStats, formatDate } from '../../utils/stats';
 
+import {
+  FireIcon,
+  CalendarDaysIcon,
+  CheckCircleIcon,
+  ChartBarIcon,
+  TagIcon,
+  ClockIcon,
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  BoltIcon,
+} from '@heroicons/react/24/outline';
+
 export default function Progress() {
   const [stats, setStats] = useState({
     currentStreak: 0,
@@ -12,150 +24,131 @@ export default function Progress() {
     monthlyCompletions: 0,
     totalExercises: 0,
     categoryStats: [],
-    recentActivities: []
+    recentActivities: [],
   });
 
-  // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
   useEffect(() => {
-    // Load all stats
     const progressStats = getAllProgressStats();
     setStats(progressStats);
   }, []);
 
-  // Animate progress bars on mount
-  useEffect(() => {
-    const progressBars = document.querySelectorAll('.progress-fill');
-
-    // Small delay to ensure CSS is loaded
-    const timeoutId = setTimeout(() => {
-      progressBars.forEach(bar => {
-        const width = bar.style.width;
-        bar.style.width = '0%';
-
-        // Animate to target width
-        setTimeout(() => {
-          bar.style.width = width;
-        }, 100);
-      });
-    }, 500);
-
-    return () => clearTimeout(timeoutId);
-  }, [stats.categoryStats]);
-
-  // Pagination logic
   const totalPages = Math.ceil(stats.recentActivities.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentActivities = stats.recentActivities.slice(startIndex, endIndex);
 
-  const goToNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
-    }
-  };
+  const goToNextPage = () => currentPage < totalPages && setCurrentPage(currentPage + 1);
+  const goToPreviousPage = () => currentPage > 1 && setCurrentPage(currentPage - 1);
+  const goToPage = (pageNumber) => setCurrentPage(pageNumber);
 
-  const goToPreviousPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
-  };
-
-  const goToPage = (pageNumber) => {
-    setCurrentPage(pageNumber);
-  };
+  const statCards = [
+    {
+      value: stats.currentStreak,
+      label: `Day${stats.currentStreak !== 1 ? 's' : ''} Streak`,
+      icon: FireIcon,
+      color: 'text-amber-500',
+      bg: 'bg-amber-50',
+      border: 'border-amber-100',
+    },
+    {
+      value: stats.weeklyCompletions,
+      label: 'This Week',
+      icon: CalendarDaysIcon,
+      color: 'text-teal-600',
+      bg: 'bg-teal-50',
+      border: 'border-teal-100',
+    },
+    {
+      value: stats.totalExercises,
+      label: 'Total Completed',
+      icon: CheckCircleIcon,
+      color: 'text-green-600',
+      bg: 'bg-green-50',
+      border: 'border-green-100',
+    },
+    {
+      value: stats.monthlyCompletions,
+      label: 'This Month',
+      icon: ChartBarIcon,
+      color: 'text-teal-600',
+      bg: 'bg-teal-50',
+      border: 'border-teal-100',
+    },
+  ];
 
   return (
     <>
       <Navbar />
-      
-      <div className="max-w-7xl mx-auto px-5 py-5">
+
+      <div className="max-w-5xl mx-auto px-5 py-8">
+
+        {/* Page Title */}
         <h1 className="text-3xl font-bold text-gray-800 text-center mb-8">
           Your Fitness Progress
         </h1>
 
-        {/* Motivational Message */}
+        {/* Motivational Banner */}
         {stats.currentStreak > 0 && (
-          <div className="bg-gradient-to-r from-green-500 to-green-700 text-white p-6 rounded-xl text-center mb-8 shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
-            <h3 className="text-2xl font-semibold mb-2"> You&apos;re on fire!</h3>
-            <p className="text-base opacity-90">
-              Keep up the amazing work! You&apos;re building healthy habits one day at a time.
-            </p>
+          <div className="flex items-center gap-4 bg-gradient-to-r from-teal-500 to-green-600 text-white px-6 py-5 rounded-2xl mb-8 shadow-md hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300">
+            <BoltIcon className="w-8 h-8 shrink-0 opacity-90" />
+            <div>
+              <p className="font-semibold text-lg leading-tight">You&apos;re on fire!</p>
+              <p className="text-sm opacity-85 mt-0.5">
+                Keep it up — you&apos;re building healthy habits one day at a time.
+              </p>
+            </div>
           </div>
         )}
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-          {/* Streak Card */}
-          <div className="bg-white p-6 rounded-xl shadow-lg text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
-            <div className="text-5xl font-bold text-amber-500 mb-1">
-              {stats.currentStreak}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {statCards.map(({ value, label, icon: Icon, color, bg, border }) => (
+            <div
+              key={label}
+              className={`bg-white border ${border} rounded-2xl p-5 flex flex-col items-center gap-3 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-300`}
+            >
+              <div className={`${bg} p-2.5 rounded-xl`}>
+                <Icon className={`w-6 h-6 ${color}`} />
+              </div>
+              <span className={`text-4xl font-bold ${color}`}>{value}</span>
+              <span className="text-sm text-gray-500 font-medium text-center">{label}</span>
             </div>
-            <div className="text-lg text-gray-600 font-medium">
-              Day{stats.currentStreak !== 1 ? 's' : ''} Streak
-            </div>
-          </div>
-
-          {/* This Week Card */}
-          <div className="bg-white p-6 rounded-xl shadow-lg text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
-            <div className="text-5xl font-bold text-indigo-600 mb-1">
-              {stats.weeklyCompletions}
-            </div>
-            <div className="text-lg text-gray-600 font-medium">
-              This Week
-            </div>
-          </div>
-
-          {/* Total Completed Card */}
-          <div className="bg-white p-6 rounded-xl shadow-lg text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
-            <div className="text-5xl font-bold text-green-500 mb-1">
-              {stats.totalExercises}
-            </div>
-            <div className="text-lg text-gray-600 font-medium">
-              Total Completed
-            </div>
-          </div>
-
-          {/* This Month Card */}
-          <div className="bg-white p-6 rounded-xl shadow-lg text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
-            <div className="text-5xl font-bold text-indigo-600 mb-1">
-              {stats.monthlyCompletions}
-            </div>
-            <div className="text-lg text-gray-600 font-medium">
-              This Month
-            </div>
-          </div>
+          ))}
         </div>
 
-        {/* Category Breakdown */}
-        <div className="bg-white p-8 rounded-xl shadow-lg mb-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-5 flex items-center gap-2">
-             Exercise Categories
+        {/* Exercise Categories */}
+        <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-7 mb-8">
+          <h2 className="text-xl font-bold text-gray-800 mb-5 flex items-center gap-2">
+            <TagIcon className="w-5 h-5 text-teal-500" />
+            Exercise Categories
           </h2>
 
           {stats.categoryStats.length > 0 ? (
-            <div>
+            <div className="space-y-1">
               {stats.categoryStats.map((category, index) => (
-                <div 
-                  key={index} 
-                  className="flex items-center justify-between py-4 border-b border-gray-200 last:border-b-0"
+                <div
+                  key={index}
+                  className="flex items-center justify-between py-3.5 border-b border-gray-100 last:border-b-0"
                 >
-                  <div className="font-medium text-gray-700">
-                    {category.name}
-                  </div>
+                  <span className="font-medium text-gray-700 text-sm">{category.name}</span>
+
                   <div className="flex items-center gap-4">
-                    <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <div 
-                        className="progress-fill h-full bg-gradient-to-r from-green-400 to-green-800 transition-all duration-500 ease-out"
+                    {/* Progress bar */}
+                    <div className="w-28 h-1.5 bg-gray-100 rounded-full overflow-hidden hidden sm:block">
+                      <div
+                        className="h-full bg-gradient-to-r from-teal-400 to-green-500 rounded-full transition-all duration-500 ease-out"
                         style={{ width: `${category.percentage}%` }}
-                      ></div>
+                      />
                     </div>
-                    <span className="text-gray-600 font-medium w-12 text-right">
+
+                    <span className="text-gray-400 text-sm w-10 text-right tabular-nums">
                       {category.percentage}%
                     </span>
-                    <span className="bg-green-500 text-white px-3 py-1 rounded-full font-medium text-sm">
+
+                    <span className="bg-teal-500 text-white text-xs font-semibold px-3 py-1 rounded-full min-w-[2rem] text-center">
                       {category.count}
                     </span>
                   </div>
@@ -163,12 +156,13 @@ export default function Progress() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 text-indigo-600">
-              <h3 className="text-xl font-semibold mb-2">No exercises completed yet</h3>
-              <p className="text-gray-600 mb-6">Start your fitness journey today!</p>
-              <Link 
-                href="/exercises" 
-                className="inline-block bg-gradient-to-r from-teal-500 to-teal-600 text-white px-6 py-3 rounded-lg font-medium hover:shadow-lg transition-all duration-300"
+            <div className="text-center py-14">
+              <CheckCircleIcon className="w-12 h-12 text-gray-200 mx-auto mb-4" />
+              <h3 className="text-base font-semibold text-gray-600 mb-1">No exercises completed yet</h3>
+              <p className="text-sm text-gray-400 mb-6">Start your fitness journey today!</p>
+              <Link
+                href="/exercises"
+                className="inline-block bg-teal-500 hover:bg-teal-600 text-white text-sm font-medium px-6 py-2.5 rounded-xl transition-colors duration-200"
               >
                 Browse Exercises
               </Link>
@@ -176,91 +170,95 @@ export default function Progress() {
           )}
         </div>
 
-        {/* Recent Activity with Pagination */}
+        {/* Recent Activity */}
         {stats.recentActivities.length > 0 && (
-          <div className="bg-white p-8 rounded-xl shadow-lg mb-8">
-            <h2 className="text-2xl font-bold text-gray-800 mb-5 flex items-center gap-2">
-               Recent Activity
+          <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-7 mb-8">
+            <h2 className="text-xl font-bold text-gray-800 mb-5 flex items-center gap-2">
+              <ClockIcon className="w-5 h-5 text-teal-500" />
+              Recent Activity
             </h2>
 
-            {/* Activity List */}
             <div>
               {currentActivities.map((activity, index) => (
-                <div 
-                  key={index} 
-                  className="py-4 border-b border-gray-200 last:border-b-0"
+                <div
+                  key={index}
+                  className="flex items-center justify-between py-3.5 border-b border-gray-100 last:border-b-0"
                 >
-                  <div className="font-medium text-gray-700">
-                    {activity.exercise.name}
+                  <div>
+                    <p className="font-medium text-gray-700 text-sm">{activity.exercise.name}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {activity.exercise.category.name} &bull; {formatDate(activity.date)}
+                    </p>
                   </div>
-                  <small className="text-gray-500 text-sm">
-                    {activity.exercise.category.name} • {formatDate(activity.date)}
-                  </small>
+                  <span className="text-teal-400">
+                    <CheckCircleIcon className="w-5 h-5" />
+                  </span>
                 </div>
               ))}
             </div>
 
-            {/* Pagination Controls */}
+            {/* Pagination */}
             {totalPages > 1 && (
-              <div className="mt-6 flex items-center justify-between border-t border-gray-200 pt-6">
-                {/* Previous Button */}
-                <button
-                  onClick={goToPreviousPage}
-                  disabled={currentPage === 1}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
-                >
-                  ← Previous
-                </button>
+              <>
+                <div className="mt-6 flex items-center justify-between border-t border-gray-100 pt-5">
+                  <button
+                    onClick={goToPreviousPage}
+                    disabled={currentPage === 1}
+                    className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-200"
+                  >
+                    <ArrowLeftIcon className="w-4 h-4" />
+                    Previous
+                  </button>
 
-                {/* Page Numbers */}
-                <div className="flex items-center gap-2">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNumber) => (
-                    <button
-                      key={pageNumber}
-                      onClick={() => goToPage(pageNumber)}
-                      className={`w-10 h-10 rounded-lg font-medium transition-all duration-300 ${
-                        currentPage === pageNumber
-                          ? 'bg-gradient-to-r from-green-500 to-teal-600 text-white shadow-lg'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                    >
-                      {pageNumber}
-                    </button>
-                  ))}
+                  <div className="flex items-center gap-1.5">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNumber) => (
+                      <button
+                        key={pageNumber}
+                        onClick={() => goToPage(pageNumber)}
+                        className={`w-9 h-9 rounded-xl text-sm font-medium transition-all duration-200 ${
+                          currentPage === pageNumber
+                            ? 'bg-teal-500 text-white shadow-sm'
+                            : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                        }`}
+                      >
+                        {pageNumber}
+                      </button>
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={goToNextPage}
+                    disabled={currentPage === totalPages}
+                    className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-200"
+                  >
+                    Next
+                    <ArrowRightIcon className="w-4 h-4" />
+                  </button>
                 </div>
 
-                {/* Next Button */}
-                <button
-                  onClick={goToNextPage}
-                  disabled={currentPage === totalPages}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
-                >
-                  Next →
-                </button>
-              </div>
-            )}
-
-            {/* Pagination Info */}
-            {totalPages > 1 && (
-              <div className="mt-4 text-center text-sm text-gray-500">
-                Showing {startIndex + 1}-{Math.min(endIndex, stats.recentActivities.length)} of {stats.recentActivities.length} activities
-              </div>
+                <p className="mt-3 text-center text-xs text-gray-400">
+                  Showing {startIndex + 1}–{Math.min(endIndex, stats.recentActivities.length)} of{' '}
+                  {stats.recentActivities.length} activities
+                </p>
+              </>
             )}
           </div>
         )}
 
         {/* Action Buttons */}
-        <div className="text-center text-white mt-8 flex flex-col sm:flex-row gap-3 justify-center">
-          <Link 
-            href="/exercises" 
-            className="inline-block bg-gradient-to-r from-teal-500 to-teal-600 text-white px-6 py-3 rounded-lg font-medium hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5"
+        <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6">
+          <Link
+            href="/exercises"
+            className="inline-flex items-center justify-center gap-2 bg-teal-500 hover:bg-teal-600 text-white text-sm font-medium px-7 py-3 rounded-xl hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
           >
+            <BoltIcon className="w-4 h-4" />
             Continue Workout
           </Link>
-          <Link 
-            href="/" 
-            className="inline-block bg-gray-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-700 transition-all duration-300 hover:-translate-y-0.5"
+          <Link
+            href="/"
+            className="inline-flex items-center justify-center gap-2 bg-white hover:bg-gray-50 text-gray-600 border border-gray-200 text-sm font-medium px-7 py-3 rounded-xl hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200"
           >
+            <ArrowLeftIcon className="w-4 h-4" />
             Back to Home
           </Link>
         </div>
