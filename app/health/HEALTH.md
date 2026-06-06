@@ -1,13 +1,13 @@
 # Health & Nutrition Page
 
 **Route:** `/health`
-**Files:** `app/health/page.js`, `app/health/health.css`
+**Files:** `app/health/page.jsx`
 
 The Health & Nutrition page displays categorised nutrition tips and recommended foods for each workout type. Content is driven entirely by `nutritionData.js` — no API calls are made on this page.
 
 ---
 
-## page.js
+## page.jsx
 
 ### Directive
 
@@ -19,10 +19,10 @@ The Health & Nutrition page displays categorised nutrition tips and recommended 
 
 | Import | Source |
 |---|---|
-| `useState`, `useEffect` | `react` |
+| `useState` | `react` |
 | `Navbar` | `../../components/Navbar` |
 | `NUTRITION_DATA`, `getSectionKeys` | `../../utils/nutritionData` |
-| `health.css` | `./health.css` |
+| `BoltIcon`, `TrophyIcon`, `ArrowUpIcon`, `ArrowDownIcon`, `FireIcon`, `HeartIcon`, `LightBulbIcon`, `BeakerIcon`, `ClockIcon`, `SparklesIcon`, `CheckCircleIcon`, `ListBulletIcon` | `@heroicons/react/24/outline` |
 
 ### State
 
@@ -30,119 +30,89 @@ The Health & Nutrition page displays categorised nutrition tips and recommended 
 |---|---|---|---|
 | `activeSection` | `string` | `'general'` | The currently displayed nutrition section key |
 
-### Derived Values
+### Module-Level Constants
 
-| Variable | Source | Description |
+**`SECTION_ICONS`** — Maps each section key to a Heroicon component, replacing the previous emoji labels in the navigation and section headers:
+
+| Section Key | Icon |
+|---|---|
+| `general` | `TrophyIcon` |
+| `upper_body` | `ArrowUpIcon` |
+| `lower_body` | `ArrowDownIcon` |
+| `core` | `FireIcon` |
+| `cardio` | `HeartIcon` |
+
+**`SECTION_LABELS`** — Maps section keys to plain text nav labels (no emojis).
+
+**`quickFacts`** — Static array of four fact objects, each with `number`, `label`, and an `icon` (Heroicon component). Replaces the previous hardcoded emoji-prefixed JSX:
+
+| Number | Label | Icon |
 |---|---|---|
-| `sectionKeys` | `getSectionKeys()` | Array of all section keys used to render the nav buttons and section list |
+| `60%` | of your body is water | `BeakerIcon` |
+| `2–3L` | of water daily | `SparklesIcon` |
+| `30 min` | post-workout protein window | `ClockIcon` |
+| `5–6` | small meals per day | `ListBulletIcon` |
 
 ### Functions
 
 **`showSection(sectionKey)`**
-Sets `activeSection` to the given key and, after a 100ms delay, smoothly scrolls to the matching section element using `document.getElementById(sectionKey + '-section')`. The delay ensures the section is rendered (and therefore visible) before the scroll fires.
-
-### Effects
-
-**Effect — Interactivity on section change**
-Runs whenever `activeSection` changes. Attaches two sets of imperative DOM event listeners:
-
-- **Tip cards (`.tip-card`)** — `mouseenter` lifts the card with `translateY(-3px) scale(1.02)`; `mouseleave` resets it. Note: CSS already handles a `:hover` transform — this JS layer adds the scale on top.
-- **Food items (`.food-item`)** — `click` briefly flashes the background to `#dcfce7` (light green) for 200ms as a tap/click feedback.
-
-> ⚠️ The cleanup `return` statements inside the `forEach` loops only clean up the last listener attached, not all of them. This is a known limitation to be aware of if refactoring.
+Sets `activeSection` to the given key and, after a 100ms delay, smoothly scrolls to the matching section element via `document.getElementById(sectionKey + '-section')`.
 
 ### Page Structure
 
 ```
 <Navbar />
-<main.main-content>
-  <section.health-hero>              ← Hero banner with title and subtitle
-  <div.container>
-    <section.quick-facts>            ← 4 static nutrition stat cards
-      <div.facts-grid>
-        <div.fact-item> × 4
-    <section.nutrition-nav>          ← Sticky section filter buttons
-      <div.nav-buttons>
-        <button.nav-btn> × 5        ← One per section key; .active on current
+<main>
+  <section>                          ← Hero — teal-to-green gradient, HeartIcon
+  <div>                              ← max-w-5xl mx-auto px-5
+    <section>                        ← Quick Facts — teal gradient banner
+      <h3> <LightBulbIcon />
+      <div>                          ← 2×2 / 4-col grid
+        <div> × 4                    ← fact tile: Icon + number + label
+    <section>                        ← Sticky nav — bg-white rounded-2xl shadow-sm
+      <div>                          ← flex-wrap gap-2
+        <button> × 5                 ← SectionIcon + label; bg-teal-500 when active
     {sectionKeys.map(...)}
-      <section.nutrition-section>   ← Hidden by default; .active = visible
-        <div.section-header>         ← Icon, title, description
-        <div.content-grid>
-          <div.tips-section>         ← Tip cards list
-            <div.tip-card> × N
-              <div.tip-header>       ← tip.icon + tip.title
-              <div.tip-content>      ← tip.content
-          <div.foods-section>        ← Recommended foods list
-            <ul.food-list>
-              <li.food-item> × N
+      [if activeSection === sectionKey]
+        <section>                    ← Nutrition section card
+          <div>                      ← Section header: icon tile + title + description
+            <SectionIcon />
+            <h2> + <p>
+          <div>                      ← 2-col content grid
+            <div>                    ← Tips panel — border-l-4 border-teal-500
+              <h3> <LightBulbIcon />
+              <div> × N              ← Tip card
+                <div>                ← SparklesIcon badge + tip.title
+                <p>                  ← tip.content
+            <div>                    ← Foods panel — border-l-4 border-green-500
+              <h3> <ListBulletIcon />
+              <ul>
+                <li> × N             ← CheckCircleIcon + food name
 ```
 
-### Section Navigation Buttons
 
-Each button maps to a `NUTRITION_DATA` section key. The `.active` class is applied when `activeSection` matches:
+### Tailwind Patterns
 
-| Button Label | Section Key |
+| Element | Key Classes |
 |---|---|
-| 🏋️ General Fitness | `general` |
-| 💪 Upper Body | `upper_body` |
-| 🦵 Lower Body | `lower_body` |
-| 🔥 Core | `core` |
-| ❤️ Cardio | `cardio` |
+| Hero section | `bg-gradient-to-r from-teal-500 to-green-600 text-white py-16 text-center` |
+| Quick facts banner | `bg-gradient-to-r from-teal-500 to-green-600 rounded-2xl p-7 text-white` |
+| Fact tile | `bg-white/15 rounded-xl p-4 text-center backdrop-blur-sm` |
+| Sticky nav | `bg-white border border-gray-100 rounded-2xl shadow-sm p-5 sticky top-[80px] z-10` |
+| Inactive nav button | `bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-100 rounded-xl` |
+| Active nav button | `bg-teal-500 text-white shadow-sm rounded-xl` |
+| Section card | `bg-white border border-gray-100 rounded-2xl shadow-sm p-8` |
+| Section icon tile | `inline-flex items-center justify-center w-14 h-14 bg-teal-50 rounded-2xl` |
+| Tips panel | `bg-gray-50 border-l-4 border-teal-500 rounded-2xl p-6` |
+| Foods panel | `bg-gray-50 border-l-4 border-green-500 rounded-2xl p-6` |
+| Tip card | `bg-white border border-gray-100 rounded-xl p-4 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200` |
+| Tip icon badge | `w-8 h-8 bg-teal-500 rounded-full flex items-center justify-center` (contains `SparklesIcon`) |
+| Food list item | `flex items-center gap-3 bg-white border-l-[3px] border-green-400 rounded-xl px-4 py-3 hover:bg-green-50 hover:translate-x-1 transition-all duration-200` (contains `CheckCircleIcon`) |
 
-### Quick Facts (Static)
+### Responsive Behaviour
 
-| Stat | Label |
+| Change | Tailwind |
 |---|---|
-| 60% | of your body is water |
-| 2–3 | liters of water daily |
-| 30min | post-workout protein window |
-| 5–6 | small meals per day |
-
----
-
-## health.css
-
-### Layout
-
-The page uses a single-column `container` layout. The nutrition content area switches to a two-column `content-grid` (`1fr 1fr`) for tips and foods side by side on desktop, collapsing to a single column on mobile (≤ 768px).
-
-### Key Styles
-
-**`.health-hero`**
-Full-width green gradient banner (`#4ade80 → #22c55e`). Title at `3rem`, subtitle capped at `600px` width.
-
-**`.nutrition-nav`**
-Sticky container (`top: 100px`, `z-index: 10`) so the section filter buttons remain accessible while scrolling. White background with a soft box shadow.
-
-**`.nav-btn`**
-Pill-shaped buttons (`border-radius: 25px`). Default state is slate grey on light background. Active/hover state switches to green (`#22c55e`) with a green glow shadow and a subtle upward lift.
-
-**`.nutrition-section`**
-Hidden by default (`display: none`). The `.active` class sets `display: block` and triggers the `fadeInUp` animation.
-
-**`@keyframes fadeInUp`**
-Fades the section in from `opacity: 0` + `translateY(20px)` to fully visible over `0.5s ease`.
-
-**`.content-grid`**
-Two-column grid with `3rem` gap. Both `.tips-section` and `.foods-section` share a light background (`#f8fafc`) and a left green border accent (`5px solid #22c55e`).
-
-**`.tip-card`**
-White card with a border and `0.3s` transition. CSS `:hover` lifts it with `translateY(-3px)` and adds a shadow (JS effect in `useEffect` adds `scale(1.02)` on top of this).
-
-**`.tip-icon`**
-Circular green badge (`40×40px`, `border-radius: 50%`) containing the tip emoji.
-
-**`.food-item`**
-Left-bordered list item with a `🥗` pseudo-element prefix. Hover slides it right with `translateX(5px)` and tints the background to `#f0fdf4`. Click briefly flashes `#dcfce7` via JS.
-
-**`.quick-facts`**
-Green gradient banner matching the hero. Uses `backdrop-filter: blur(10px)` on each `.fact-item` for a frosted glass effect.
-
-### Responsive Breakpoint — `max-width: 768px`
-
-| Change | Detail |
-|---|---|
-| Hero `h1` font size | Reduced to `2rem` |
-| Nav buttons | Stack vertically, fixed `200px` width |
-| Content grid | Collapses to single column |
-| Section padding | Reduced to `2rem` |
+| Quick facts — 2 cols mobile, 4 cols desktop | `grid-cols-2 md:grid-cols-4` |
+| Nav buttons — wrap naturally | `flex flex-wrap` |
+| Content grid — 1 col mobile, 2 cols desktop | `grid-cols-1 md:grid-cols-2` |

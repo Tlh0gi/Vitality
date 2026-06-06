@@ -1,13 +1,14 @@
 # Progress Page
 
 **Route:** `/progress`
-**Files:** `app/progress/page.js`, `app/progress/progress.css`
+**Files:** `app/progress/page.jsx`
+
 
 The My Progress page displays the user's fitness statistics derived from their exercise completion history stored in `localStorage`. All data is read on mount via `getAllProgressStats()` from `utils/stats.js` — no API calls are made.
 
 ---
 
-## page.js
+## page.jsx
 
 ### Directive
 
@@ -23,13 +24,14 @@ The My Progress page displays the user's fitness statistics derived from their e
 | `Link` | `next/link` |
 | `Navbar` | `../../components/Navbar` |
 | `getAllProgressStats`, `formatDate` | `../../utils/stats` |
-| `progress.css` | `./progress.css` |
+| `FireIcon`, `CalendarDaysIcon`, `CheckCircleIcon`, `ChartBarIcon`, `TagIcon`, `ClockIcon`, `ArrowLeftIcon`, `ArrowRightIcon`, `BoltIcon` | `@heroicons/react/24/outline` |
 
 ### State
 
 | Variable | Type | Initial Value | Description |
 |---|---|---|---|
 | `stats` | `object` | See below | All progress statistics for the current user |
+| `currentPage` | `number` | `1` | Active page index for the recent activity paginator |
 
 **`stats` default shape:**
 
@@ -44,116 +46,113 @@ The My Progress page displays the user's fitness statistics derived from their e
 }
 ```
 
+### Derived Values
+
+| Variable | Source | Description |
+|---|---|---|
+| `totalPages` | `Math.ceil(recentActivities.length / itemsPerPage)` | Total paginator pages |
+| `currentActivities` | Slice of `recentActivities` | The 5 activities shown on the current page |
+| `statCards` | Inline array | Config objects driving the four stat card tiles |
+
 ### Effects
 
-**Effect 1 — Load stats on mount**
+**Effect — Load stats on mount**
 Runs once on mount. Calls `getAllProgressStats()` and sets the result into `stats` state.
 
-**Effect 2 — Animate progress bars**
-Runs whenever `stats.categoryStats` changes. After a 500ms delay (to ensure CSS is loaded), it finds all `.progress-fill` elements and resets their `width` to `0%`, then after a further 100ms restores each bar's original inline width. This triggers the CSS `transition: width 0.5s ease` animation on every render, giving a fill-in effect. Returns a cleanup that clears the outer timeout.
+
+### Pagination Functions
+
+| Function | Behaviour |
+|---|---|
+| `goToNextPage()` | Increments `currentPage` if not on the last page |
+| `goToPreviousPage()` | Decrements `currentPage` if not on the first page |
+| `goToPage(n)` | Sets `currentPage` to `n` directly |
 
 ### Conditional Rendering
 
-**Motivational message** — Only rendered when `stats.currentStreak > 0`. Displays an encouraging banner above the stats grid.
+**Motivational banner** — Only rendered when `stats.currentStreak > 0`. Displays a teal-to-green gradient banner with a `BoltIcon` above the stats grid.
 
-**Category breakdown** — If `stats.categoryStats` has entries, renders a progress bar row for each. Otherwise shows an empty state with a link to `/exercises`.
+**Category breakdown** — If `stats.categoryStats` has entries, renders a progress bar row for each. Otherwise shows an empty state with a `CheckCircleIcon` and a link to `/exercises`.
 
-**Recent activity** — Only rendered when `stats.recentActivities` has entries.
+**Recent activity** — Only rendered when `stats.recentActivities` has entries. Includes paginator controls when `totalPages > 1`.
 
 ### Page Structure
 
 ```
 <Navbar />
-<div.progress-container>
-  <h1.section-title>               ← "📈 Your Fitness Progress"
+<div>                                  ← max-w-5xl mx-auto px-5 py-8
+  <h1>                                 ← "Your Fitness Progress"
   [if currentStreak > 0]
-    <div.motivational-message>     ← Conditional streak banner
-  <div.stats-grid>
-    <div.stat-card.streak-card>    ← currentStreak (amber)
-    <div.stat-card>                ← weeklyCompletions
-    <div.stat-card.total-card>     ← totalExercises (green)
-    <div.stat-card>                ← monthlyCompletions
-  <div.category-section>           ← Category breakdown
-    <h2.section-title>
+    <div>                              ← Teal-green gradient motivational banner
+      <BoltIcon />
+      <p> + <p>
+  <div>                                ← 2×2 / 4-col stat card grid
+    <StatCard> × 4                     ← See stat card table below
+  <div>                                ← Exercise Categories card
+    <h2> <TagIcon /> "Exercise Categories"
     [if categoryStats.length > 0]
-      <div.category-item> × N
-        <div.category-name>        ← category.name
-        <div.category-stats>
-          <div.progress-bar>
-            <div.progress-fill>    ← width set to category.percentage%
-          <span.category-percentage> ← "X%"
-          <span.category-count>    ← completion count badge
+      <div> × N                        ← Category rows
+        <span>                         ← category.name
+        <div>                          ← Progress bar (teal gradient)
+        <span>                         ← percentage%
+        <span>                         ← count badge (bg-teal-500)
     [else]
-      <div.empty-state>            ← Icon, message, link to /exercises
+      <div>                            ← Empty state
+        <CheckCircleIcon />
+        <h3> + <p> + <Link>
   [if recentActivities.length > 0]
-    <div.category-section>         ← Recent activity list
-      <h2.section-title>
-      <div.category-item> × N
-        <div.category-name>        ← activity.exercise.name
-        <small.activity-date>      ← "Category • Formatted date"
-  <div.button-group>
-    <Link.btn-primary>             ← "Continue Workout" → /exercises
-    <Link.btn-primary.btn-secondary> ← "Back to Home" → /
+    <div>                              ← Recent Activity card
+      <h2> <ClockIcon /> "Recent Activity"
+      <div> × N                        ← Activity rows
+        <p>                            ← activity.exercise.name
+        <p>                            ← category • formatted date
+        <CheckCircleIcon />
+      [if totalPages > 1]
+        <div>                          ← Pagination controls
+          <button> <ArrowLeftIcon />   ← Previous
+          <button> × N                 ← Page number buttons
+          <button> <ArrowRightIcon />  ← Next
+        <p>                            ← "Showing X–Y of Z activities"
+  <div>                                ← Action buttons row
+    <Link>                             ← "Continue Workout" → /exercises (teal)
+    <Link>                             ← "Back to Home" → / (white/outlined)
 ```
 
-### Stats Grid Cards
+### Stat Cards
 
-| Card | Modifier Class | Value | Number Colour |
+Each card is driven by an entry in the `statCards` config array and shares the same Tailwind card shell (`bg-white border rounded-2xl p-5 shadow-sm`). The icon, number colour, and background tint vary per card:
+
+| Card | Icon | Value | Number Colour |
 |---|---|---|---|
-| Day Streak | `.streak-card` | `currentStreak` | Amber `#f59e0b` |
-| This Week | — | `weeklyCompletions` | Indigo `#4f46e5` |
-| Total Completed | `.total-card` | `totalExercises` | Green `#10b981` |
-| This Month | — | `monthlyCompletions` | Indigo `#4f46e5` |
+| Day Streak | `FireIcon` | `currentStreak` | `text-amber-500` |
+| This Week | `CalendarDaysIcon` | `weeklyCompletions` | `text-teal-600` |
+| Total Completed | `CheckCircleIcon` | `totalExercises` | `text-green-600` |
+| This Month | `ChartBarIcon` | `monthlyCompletions` | `text-teal-600` |
 
 > The streak label pluralises automatically: `"Day Streak"` vs `"Days Streak"` based on `currentStreak !== 1`.
 
----
+### Tailwind Patterns
 
-## progress.css
-
-### Layout
-
-The page uses a centred `progress-container` (`max-width: 1200px`, `padding: 20px`). Stats are arranged in a responsive auto-fit grid. Category and activity sections are stacked full-width cards below.
-
-### Key Styles
-
-**`.stats-grid`**
-`repeat(auto-fit, minmax(250px, 1fr))` — four equal columns on wide screens, collapsing naturally as the viewport narrows.
-
-**`.stat-card`**
-White card with a `12px` border radius and a soft shadow. Lifts `5px` on hover with an increased shadow.
-
-**`.stat-number`**
-`2.5em`, bold. Default colour is indigo (`#4f46e5`). Overridden to amber on `.streak-card` and green on `.total-card`.
-
-**`.motivational-message`**
-Full-width green gradient banner (`#07db63 → #0b7227`). Lifts `4px` on hover with a deeper shadow.
-
-**`.category-section`**
-White card with `30px` padding and the same shadow pattern as stat cards. Used for both the category breakdown and recent activity sections.
-
-**`.category-item`**
-Flexbox row, space-between. Separated by a bottom border; the last item has no border.
-
-**`.progress-bar` / `.progress-fill`**
-The bar track is `100px × 8px`, grey (`#e5e7eb`), with overflow hidden. The fill uses a green gradient (`#66ea9e → #045926`) and animates width changes over `0.5s ease` — this is what the JS effect in `useEffect` triggers.
-
-**`.category-count`**
-Small green pill badge (`#40d068`) showing the raw completion count.
-
-**`.empty-state`**
-Centred layout with a large faded emoji icon, text, and a CTA link. Uses indigo (`#667eea`) for text colour.
-
-**`.btn-primary`**
-Teal gradient button (`#1abc9c → #16a085`). Hover lightens the gradient. The `.btn-secondary` modifier overrides the background to grey (`#6b7280`).
-
-### Responsive Breakpoint — `max-width: 768px`
-
-| Change | Detail |
+| Element | Key Classes |
 |---|---|
-| Stats grid | Collapses to single column (`1fr`) |
-| Container padding | Reduced to `15px` |
-| Stat number font size | Reduced to `2em` |
-| Progress bar width | Reduced to `60px` |
-| Category stats gap | Reduced to `10px` |
-| Action buttons | Stack vertically, full width up to `300px` |
+| Page wrapper | `max-w-5xl mx-auto px-5 py-8` |
+| Motivational banner | `bg-gradient-to-r from-teal-500 to-green-600 text-white px-6 py-5 rounded-2xl` |
+| Stat card | `bg-white border border-{color}-100 rounded-2xl p-5 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-300` |
+| Section card | `bg-white border border-gray-100 rounded-2xl shadow-sm p-7` |
+| Progress bar track | `w-28 h-1.5 bg-gray-100 rounded-full overflow-hidden` |
+| Progress bar fill | `h-full bg-gradient-to-r from-teal-400 to-green-500 transition-all duration-500 ease-out` |
+| Count badge | `bg-teal-500 text-white text-xs font-semibold px-3 py-1 rounded-full` |
+| Active page button | `bg-teal-500 text-white shadow-sm` |
+| Inactive page button | `bg-gray-50 text-gray-600 hover:bg-gray-100` |
+| Primary CTA | `bg-teal-500 hover:bg-teal-600 text-white rounded-xl` |
+| Secondary CTA | `bg-white border border-gray-200 text-gray-600 rounded-xl` |
+
+### Responsive Behaviour
+
+All responsiveness is handled via Tailwind breakpoint prefixes — no media query block in a separate stylesheet.
+
+| Change | Tailwind |
+|---|---|
+| Stat grid — 2 cols mobile, 4 cols desktop | `grid-cols-2 lg:grid-cols-4` |
+| Progress bar — hidden on mobile | `hidden sm:block` |
+| Action buttons — stack on mobile | `flex-col sm:flex-row` |
